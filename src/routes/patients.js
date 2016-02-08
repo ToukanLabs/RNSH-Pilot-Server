@@ -6,7 +6,7 @@ function fetchPatient (patientId) {
       return p;
     }
   })[0];
-  
+
   return patient;
 };
 
