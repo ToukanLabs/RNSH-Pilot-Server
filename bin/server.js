@@ -1,10 +1,11 @@
-#!/usr/bin/env node
+require('babel-register');
+require('dotenv/config');
 
 /**
  * Module dependencies.
- */
 
-var app = require('../app');
+ */
+var app = require('../src/app');
 var debug = require('debug')('rnsh-pilot-server:server');
 var http = require('http');
 
