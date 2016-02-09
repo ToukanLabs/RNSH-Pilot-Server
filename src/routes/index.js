@@ -9,8 +9,11 @@ router.get('/', function (req, res, next) {
 
 router.get('/patient/:patientId', function (req, res, next) {
   // res.send('Got a GET request for followup');
-  var newPatient = patient.fetchPatient(req.params.patientId);
-  res.json(newPatient);
+  patient.fetchPatient(res, req.params.patientId);
+});
+
+router.get('/patient', function (req, res, next) {
+  patient.fetchAllPatients(res);
 });
 
 module.exports = router;
