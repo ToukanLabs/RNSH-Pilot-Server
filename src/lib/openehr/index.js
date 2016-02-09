@@ -5,23 +5,25 @@ import { URLQueryStringBuilder } from './utils';
 es6Promise.polyfill();
 
 class OpenEHR {
-  static get Genders() {
+  static get Genders () {
     return {
       MALE: 'MALE',
       FEMALE: 'FEMALE'
     };
   }
 
-  constructor (openEhrUrl, username, password) {
+  constructor (openEhrUrl, subjectNamespace, username, password) {
     this.endpoints = {
       demographic: 'demographics',
       party: 'demographics/party',
+      ehr: 'ehr',
     };
 
     // Strip the terailing slash if its supplied.
     this.baseUrl = (openEhrUrl.endsWith('/')) ? openEhrUrl.replace(/\/$/, '') : openEhrUrl;
     this.username = username;
     this.password = password;
+    this.subjectNamespace = subjectNamespace;
   }
 
   getAuthorizationHeader = () => {
@@ -61,14 +63,17 @@ class OpenEHR {
   postOpenEhr = (urlEndpoint, body, callback) => {
     const url = `${this.baseUrl}/${urlEndpoint}`;
 
-    const options = {
+    let options = {
       method: 'post',
       headers: {
-        'Authorization': this.getAuthorizationHeader(),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+        'Authorization': this.getAuthorizationHeader()
+      }
     };
+
+    if (body !== null) {
+      options.body = JSON.stringify(body);
+      options.headers['Content-Type'] = 'application/json';
+    }
 
     fetch(url, options)
       .then(function (response) {
@@ -167,7 +172,17 @@ class OpenEHR {
       ]
     };
 
-    this.postOpenEhr(url, partyBody, (json) => {
+    this.postOpenEhr(url, partyBody, (partyResponseJson) => {
+      this.createEhr(mrn, (ehrResponseJson) => {
+        callback(partyResponseJson);
+      });
+    });
+  };
+
+  createEhr = (subjectId, callback) => {
+    const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
+
+    this.postOpenEhr(url, null, (json) => {
       callback(json);
     });
   };
