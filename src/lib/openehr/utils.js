@@ -17,4 +17,14 @@ class URLQueryStringBuilder {
   };
 }
 
+function flattenAdditionalPartyInfo (additionalPartyInfo) {
+  var flattened = {};
+  for (var i in additionalPartyInfo) {
+    flattened[additionalPartyInfo[i].key] = additionalPartyInfo[i].value;
+  }
+
+  return flattened;
+}
+
 export { URLQueryStringBuilder as URLQueryStringBuilder };
+export { flattenAdditionalPartyInfo as flattenAdditionalPartyInfo };
