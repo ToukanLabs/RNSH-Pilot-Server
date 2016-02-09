@@ -5,12 +5,21 @@ import { URLQueryStringBuilder } from './utils';
 es6Promise.polyfill();
 
 class OpenEHR {
+  static get Genders() {
+    return {
+      MALE: 'MALE',
+      FEMALE: 'FEMALE'
+    };
+  }
+
   constructor (openEhrUrl, username, password) {
     this.endpoints = {
-      demographic: 'demographics/',
+      demographic: 'demographics',
+      party: 'demographics/party',
     };
 
-    this.baseUrl = (openEhrUrl.endsWith('/')) ? openEhrUrl : `${openEhrUrl}/`;
+    // Strip the terailing slash if its supplied.
+    this.baseUrl = (openEhrUrl.endsWith('/')) ? openEhrUrl.replace(/\/$/, '') : openEhrUrl;
     this.username = username;
     this.password = password;
   }
@@ -24,8 +33,8 @@ class OpenEHR {
     return this.authorizationHeader;
   };
 
-  fetchOpenEhr = (urlEndpoint, callback) => {
-    const url = `${this.baseUrl}${urlEndpoint}`;
+  getOpenEhr = (urlEndpoint, callback) => {
+    const url = `${this.baseUrl}/${urlEndpoint}`;
 
     const options = {
       headers: {
@@ -49,49 +58,45 @@ class OpenEHR {
       });
   };
 
-  /*
-    Fetches a list of all parties (i.e. patients) from OpenEHR.
-    Response is of the form:
+  postOpenEhr = (urlEndpoint, body, callback) => {
+    const url = `${this.baseUrl}/${urlEndpoint}`;
 
-    parties: [{
-    "id": "7574",
-      "version": 0,
-      "firstNames": "Leslie",
-      "lastNames": "Sampson",
-      "gender": "MALE",
-      "dateOfBirth": "1971-06-25T00:00:00.000Z",
-      "address": {
-        "id": "7574",
-        "version": 0,
-        "address": "Ap #408-5503 Vivamus Rd., Penzance, Cornwall, EB7K 8ZF"
+    const options = {
+      method: 'post',
+      headers: {
+        'Authorization': this.getAuthorizationHeader(),
+        'Content-Type': 'application/json'
       },
-      "partyAdditionalInfo": [
-        {
-          "id": "7576",
-          "version": 0,
-          "key": "title",
-          "value": "Mr"
-        },
-        {
-          "id": "7575",
-          "version": 0,
-          "key": "uk.nhs.nhs_number",
-          "value": "9999999010"
+      body: JSON.stringify(body)
+    };
+
+    fetch(url, options)
+      .then(function (response) {
+        if (response.status >= 400) {
+          console.log(response);
+          throw new Error('Bad response from server');
         }
-      ]
-    }, ...]
-  */
+        return response.json();
+      })
+      .then(function (json) {
+        callback(json);
+      })
+      .catch(function (ex) {
+        console.log('parsing failed', ex);
+      });
+  };
+
   allParties = (callback) => {
-    const url = `${this.endpoints.demographic}party/query/?lastNames=*`;
-    this.fetchOpenEhr(url, (json) => {
+    const url = `${this.endpoints.party}/query/?lastNames=*&rnsh.mrn=*`;
+    this.getOpenEhr(url, (json) => {
       callback(json.parties);
     });
   };
 
   searchParties = (searchTerm, callback) => {
-    const url = `${this.endpoints.demographic}party/query/?search=*${searchTerm}*`;
+    const url = `${this.endpoints.party}/query/?search=*${searchTerm}*&rnsh.mrn=*`;
 
-    this.fetchOpenEhr(url, (json) => {
+    this.getOpenEhr(url, (json) => {
       callback(json.parties);
     });
   };
@@ -108,13 +113,63 @@ class OpenEHR {
     }
 
     if (mrn && mrn !== '') {
-      queryStringBuilder.addParam('uk.nhs.nhs_number', `*${mrn}*`);
+      queryStringBuilder.addParam('rnsh.mrn', `*${mrn}*`);
     }
 
     const queryString = queryStringBuilder.getQueryString();
-    const url = `${this.endpoints.demographic}party/query/${queryString}`;
+    const url = `${this.endpoints.party}/query/${queryString}`;
 
-    this.fetchOpenEhr(url, callback);
+    this.getOpenEhr(url, (json) => {
+      callback(json.parties);
+    });
+  };
+
+  getParty = (partyId, callback) => {
+    const url = `${this.endpoints.party}/${partyId}`;
+
+    this.getOpenEhr(url, (json) => {
+      callback(json.party);
+    });
+  };
+
+  createParty = (firstNames, lastNames, gender, dateOfBirth, address, mrn, tumorType, isSurgical, phone, email, callback) => {
+    const url = `${this.endpoints.party}`;
+
+    const partyBody = {
+      firstNames: firstNames,
+      lastNames: lastNames,
+      gender: gender,
+      dateOfBirth: dateOfBirth,
+      address: {
+        address: address
+      },
+      partyAdditionalInfo: [
+        {
+          key: 'rnsh.mrn',
+          value: mrn
+        },
+        {
+          key: 'tumorType',
+          value: tumorType
+        },
+        {
+          key: 'surgical',
+          value: isSurgical
+        },
+        {
+          key: 'phone',
+          value: phone
+        },
+        {
+          key: 'email',
+          value: email
+        }
+      ]
+    };
+
+    this.postOpenEhr(url, partyBody, (json) => {
+      callback(json);
+    });
   };
 }
 
