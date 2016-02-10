@@ -69,6 +69,8 @@ class OpenEHR {
         'Authorization': this.getAuthorizationHeader()
       }
     };
+    console.log(urlEndpoint);
+    console.log(body);
 
     if (body !== null) {
       options.body = JSON.stringify(body);

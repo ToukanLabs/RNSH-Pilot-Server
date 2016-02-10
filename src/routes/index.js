@@ -16,4 +16,8 @@ router.get('/patient', function (req, res, next) {
   patient.fetchAllPatients(res);
 });
 
+router.post('/patient', function (req, res, next) {
+  patient.addPatient(req, res);
+});
+
 module.exports = router;
