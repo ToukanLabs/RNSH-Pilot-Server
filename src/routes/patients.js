@@ -4,6 +4,7 @@ import fetch from 'isomorphic-fetch';
 
 const code4health = new OpenEHR(
   'https://ehrscape.code-4-health.org/rest/v1/',
+  'rnsh.mrn',
   'rnshpilot_c4h',
   'lIsombRI'
 );
