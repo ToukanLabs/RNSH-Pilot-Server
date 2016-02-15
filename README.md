@@ -25,7 +25,9 @@ Server for RNSH Pilot
     6. `echo 'prefix=/usr/local' > node/etc/npmrc`
     7. `sudo mv node /opt/``
     8. `sudo chown -R root: /opt/node`
-2. Create a directory to serve the app from (e.g. /srv/RNSH-Pilot-Server)
+    9. `sudo ln -s /opt/node/bin/node /usr/local/bin/node`
+    10. `sudo ln -s /opt/node/bin/npm /usr/local/bin/npm`
+2. Create a directory to serve the app from (e.g. /srv/api.rnshpilot.fiviumdev.com)
 3. Clone this git repo to this directory `git clone http://github.com/FiviumAustralia/RNSH-Pilot-Server`
 4. Run `npm install`
 5. Install pm2 (a production process manager for node apps):
@@ -53,3 +55,4 @@ Server for RNSH Pilot
                   proxy_cache_bypass $http_upgrade;
           }
 ```
+9. Restart nginx `service nginx restart`
