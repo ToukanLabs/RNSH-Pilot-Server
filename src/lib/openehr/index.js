@@ -175,19 +175,19 @@ class OpenEHR {
     };
 
     this.postOpenEhr(url, partyBody, (partyResponseJson) => {
-      this.createEhr(mrn, (ehrResponseJson) => {
-        callback(partyResponseJson);
-      });
+      // this.createEhr(mrn, (ehrResponseJson) => {
+      callback(partyResponseJson);
+      // });
     });
   };
 
-  createEhr = (subjectId, callback) => {
-    const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
-
-    this.postOpenEhr(url, null, (json) => {
-      callback(json);
-    });
-  };
+  // createEhr = (subjectId, callback) => {
+  //   const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
+  //
+  //   this.postOpenEhr(url, null, (json) => {
+  //     callback(json);
+  //   });
+  // };
 }
 
 export default OpenEHR;
