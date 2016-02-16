@@ -4,10 +4,14 @@ Server for RNSH Pilot
 
 # Manual Deployment
 
-1. SSH to the server
-2. Navigate to the directory with the git repo in it.
-3. Run `git pull`
-4. Run `git checkout tags/tag-no` Where tag-no is the name of the tag we want to be serving.
+1. Ensure the build you want to deploy is tagged in git.
+2. SSH to the server
+3. Navigate to the directory with the git repo in it.
+4. Run `git pull`
+5. Run `git checkout tags/<tag-no>` Where <tag-no> is the name of the git tag we want to be serving.
+6. Restart the process with pm2:
+    1. Run `pm2 list` and identify the process you need to restart.
+    2. Run `pm2 restart <processId>` where <processId> is the ID of the process you identified with `pm2 list`.
 
 # Server Config
 
