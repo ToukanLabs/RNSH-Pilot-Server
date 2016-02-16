@@ -1,13 +1,23 @@
 {
-  "name": "rnsh-pilot-server",
-  "version": "0.0.0",
-  "private": true,
+  "name": "RNSH-Pilot-Server",
+  "version": "0.0.1",
+  "description": "Backend API for pilot clinical research database for Royal North Shore Hospital.",
   "scripts": {
     "start": "npm run dev",
     "dev": "node -r dotenv/config ./bin/server",
     "clean": "rm -rf dist",
     "compile": "./node_modules/.bin/babel src -d dist"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FiviumAustralia/RNSH-Pilot-Server"
+  },
+  "author": {
+    "name": "Fivium Pty. Ltd.",
+    "email": "code.management.aus@fivium.co.uk",
+    "url": "https://www.fivium.com.au"
+  },
+  "license": "BSD-3-Clause",
   "dependencies": {
     "body-parser": "~1.13.2",
     "cookie-parser": "~1.3.5",
