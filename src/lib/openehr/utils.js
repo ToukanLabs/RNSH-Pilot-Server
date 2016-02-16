@@ -40,7 +40,7 @@ function openEHRPartyToPatient (partyJson) {
     address: partyJson.address.address,
     phone: additionalPartyInfo.phone,
     email: additionalPartyInfo.email,
-    gender: (partyJson.gender === OpenEHR.Genders.MALE) ? 'M' : 'F',
+    gender: partyJson.gender,
     tumorType: additionalPartyInfo.tumorType,
     surgical: additionalPartyInfo.surgical,
     allergies: [
