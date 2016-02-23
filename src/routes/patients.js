@@ -1,6 +1,10 @@
 import OpenEHR from '../lib/openehr';
 import { openEHRPartyToPatient } from '../lib/openehr/utils';
 import fetch from 'isomorphic-fetch';
+var wkhtmltopdf = require('wkhtmltopdf');
+var fs = require('fs');
+var btoa = require('btoa');
+var os = require('os');
 
 const code4health = new OpenEHR(
   'https://ehrscape.code-4-health.org/rest/v1/',
@@ -52,6 +56,46 @@ function addPatient (req, res) {
     });
 }
 
+function sendAria (req, res) {
+  console.log(req.body.pdfhtml);
+  const d = new Date().toISOString();
+  const dateOfServiceSlug = d.replace(/:/g, '--');
+  var outFile = `${os.tmpdir()}/out_${dateOfServiceSlug}.pdf`;
+  wkhtmltopdf(req.body.pdfhtml, { output: outFile }, function (code, signal) {
+    fs.readFile(outFile, (err, data) => {
+      if (err) {
+        return console.log(err);
+      }
+      var base64data = new Buffer(data).toString('base64');
+      const body = {
+        'BinaryContent': base64data,
+        'FileFormat': 'PDF',
+        'DateOfService': '2016-02-09T11:01:12'
+      };
+      const url = `${process.env.ARIA_API_URL}/${btoa('#' + req.body.mrn)}/Document`;
+      const options = {
+        method: 'post',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `${process.env.ARIA_AUTH_CODE}`
+        },
+        body: JSON.stringify(body)
+      };
+
+      fetch(url, options)
+      .then((response) => {
+        return response.text();
+      }).then((json) => {
+        console.log(json);
+        res.json(json);
+      }).catch((ex) => {
+        console.log('parsing failed', ex);
+      });
+    });
+  });
+};
+
 module.exports.fetchPatient = fetchPatient;
 module.exports.fetchAllPatients = fetchAllPatients;
 module.exports.addPatient = addPatient;
+module.exports.sendAria = sendAria;
