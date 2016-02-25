@@ -81,7 +81,6 @@ class OpenEHR {
       .then(function (response) {
         if (response.status >= 400) {
           console.log(response);
-          throw new Error('Bad response from server');
         }
         return response.json();
       })
@@ -174,20 +173,23 @@ class OpenEHR {
       ]
     };
 
-    this.postOpenEhr(url, partyBody, (partyResponseJson) => {
-      // this.createEhr(mrn, (ehrResponseJson) => {
-      callback(partyResponseJson);
-      // });
+    this.createEhr(mrn, (ehrResponseJson) => {
+      if (ehrResponseJson.status === 400 && ehrResponseJson.code === 'EHR-2124') {
+        callback(ehrResponseJson);
+      } else {
+        this.postOpenEhr(url, partyBody, (partyResponseJson) => {
+          callback(partyResponseJson);
+        });
+      }
     });
   };
 
-  // createEhr = (subjectId, callback) => {
-  //   const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
-  //
-  //   this.postOpenEhr(url, null, (json) => {
-  //     callback(json);
-  //   });
-  // };
+  createEhr = (subjectId, callback) => {
+    const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
+    this.postOpenEhr(url, null, (json) => {
+      callback(json);
+    });
+  };
 }
 
 export default OpenEHR;

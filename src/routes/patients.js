@@ -32,6 +32,15 @@ function fetchAllPatients (res) {
 function addPatient (req, res) {
   code4health.createParty(req.body.firstNames, req.body.lastNames, req.body.gender, req.body.dateOfBirth,
     req.body.address, req.body.mrn, req.body.tumorType, req.body.isSurgical, req.body.phone, req.body.email, (json) => {
+      if (json.status === 400 && json.code === 'EHR-2124') {
+        res.status(400);
+        res.json({
+          status: 'error',
+          message: 'A patient with this MRN already exists.'
+        });
+        return;
+      }
+
       console.log(json.meta.href);
       const url = json.meta.href;
       const options = {
@@ -42,7 +51,6 @@ function addPatient (req, res) {
       fetch(url, options)
         .then(function (response) {
           if (response.status >= 400) {
-            console.log(response);
             throw new Error('Bad response from server');
           }
           return response.json();
@@ -86,7 +94,6 @@ function sendAria (req, res) {
       .then((response) => {
         return response.text();
       }).then((json) => {
-        console.log(json);
         res.json(json);
       }).catch((ex) => {
         console.log('parsing failed', ex);
