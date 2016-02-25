@@ -24,4 +24,12 @@ router.post('/sendaria', function (req, res, next) {
   patient.sendAria(req, res);
 });
 
+router.post('/prostate/diagnosis/:ehrId', function (req, res, next) {
+  patient.addDiagnosis(req, res);
+});
+
+router.get('/prostate/diagnosis/:ehrId', function (req, res, next) {
+  patient.getDiagnosis(res, req.params.ehrId);
+});
+
 module.exports = router;

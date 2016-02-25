@@ -1,6 +1,6 @@
 import es6Promise from 'es6-promise';
 import fetch from 'isomorphic-fetch';
-import { URLQueryStringBuilder } from './utils';
+import { URLQueryStringBuilder, flattenAdditionalPartyInfo } from './utils';
 
 es6Promise.polyfill();
 
@@ -17,6 +17,8 @@ class OpenEHR {
       demographic: 'demographics',
       party: 'demographics/party',
       ehr: 'ehr',
+      query: 'query',
+      composition: 'composition'
     };
 
     // Strip the terailing slash if its supplied.
@@ -134,7 +136,10 @@ class OpenEHR {
     const url = `${this.endpoints.party}/${partyId}`;
 
     this.getOpenEhr(url, (json) => {
-      callback(json.party);
+      this.getEhr(flattenAdditionalPartyInfo(json.party.partyAdditionalInfo)['rnsh.mrn'], (ehrJson) => {
+        json.party.ehrId = ehrJson.ehrId;
+        callback(json.party);
+      });
     });
   };
 
@@ -190,6 +195,35 @@ class OpenEHR {
       callback(json);
     });
   };
+
+  getEhr = (subjectId, callback) => {
+    const url = `${this.endpoints.ehr}/?subjectId=${subjectId}&subjectNamespace=${this.subjectNamespace}`;
+    this.getOpenEhr(url, (json) => {
+      callback(json);
+    });
+  };
+
+  getAql = (aql, callback) => {
+    const url = `${this.endpoints.query}/?aql=${aql}`;
+    this.getOpenEhr(url, (json) => {
+      callback(json);
+    });
+  };
+
+  getComposition = (compositionUid, callback) => {
+    const url = `${this.endpoints.composition}/${compositionUid}?format=STRUCTURED`;
+    this.getOpenEhr(url, (json) => {
+      callback(json);
+    });
+  };
+
+  saveComposition = (templateId, ehrId, compositionBody, callback) => {
+    const url = `${this.endpoints.composition}/?templateId=${templateId}&ehrId=${ehrId}`;
+    this.postOpenEhr(url, compositionBody, (json) => {
+      callback(json);
+    });
+  };
+
 }
 
 export default OpenEHR;

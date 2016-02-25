@@ -34,6 +34,7 @@ function openEHRPartyToPatient (partyJson) {
   return {
     id: partyJson.id,
     mrn: additionalPartyInfo['rnsh.mrn'],
+    ehrId: partyJson.ehrId,
     dob: partyJson.dateOfBirth,
     firstname: partyJson.firstNames,
     surname: partyJson.lastNames,
