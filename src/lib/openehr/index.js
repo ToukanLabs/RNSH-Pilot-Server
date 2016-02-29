@@ -89,13 +89,11 @@ class OpenEHR {
     fetch(url, options)
       .then(function (response) {
         if (response.status >= 400) {
-          console.log(response);
           return response.text();
         }
         return response.json();
       })
       .then(function (json) {
-        console.log(json);
         callback(json);
       })
       .catch(function (ex) {
@@ -187,7 +185,15 @@ class OpenEHR {
       ]
     };
 
-    this.createEhr(mrn, (ehrResponseJson) => {
+    this.createEhr(mrn, (ehrResponse) => {
+      let ehrResponseJson;
+      try {
+        var jsonResponse = JSON.parse(ehrResponse);
+        ehrResponseJson = jsonResponse;
+      } catch (e) {
+        ehrResponseJson = ehrResponse;
+      }
+
       if (ehrResponseJson.status === 400 && ehrResponseJson.code === 'EHR-2124') {
         callback(ehrResponseJson);
       } else {
