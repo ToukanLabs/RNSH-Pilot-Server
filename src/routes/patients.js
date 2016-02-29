@@ -5,6 +5,7 @@ var wkhtmltopdf = require('wkhtmltopdf');
 var fs = require('fs');
 var btoa = require('btoa');
 var os = require('os');
+var request = require('request');
 
 const code4health = new OpenEHR(
   'https://ehrscape.code-4-health.org/rest/v1/',
@@ -173,23 +174,23 @@ function sendAria (req, res) {
         'DateOfService': '2016-02-09T11:01:12'
       };
       const url = `${process.env.ARIA_API_URL}/${btoa('#' + req.body.mrn)}/Document`;
-      const options = {
-        method: 'post',
-        headers: {
+
+      request({
+        method: 'POST',
+        'rejectUnauthorized': false,
+        'url': url,
+        'headers': {
           'Content-Type': 'application/json',
           'Authorization': `${process.env.ARIA_AUTH_CODE}`
         },
-        body: JSON.stringify(body),
-        rejectUnauthorized: false,
-      };
-
-      fetch(url, options)
-      .then((response) => {
-        return response.text();
-      }).then((json) => {
-        res.json(json);
-      }).catch((ex) => {
-        console.log('parsing failed', ex);
+        'body': body,
+        'json': true,
+      },
+      (error, response, body) => {
+        if (error) {
+          console.log('parsing failed', error);
+        }
+        res.json(body);
       });
     });
   });
