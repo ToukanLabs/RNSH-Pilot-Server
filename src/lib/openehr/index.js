@@ -37,7 +37,7 @@ class OpenEHR {
     return this.authorizationHeader;
   };
 
-  getOpenEhr = (urlEndpoint, callback) => {
+  getOpenEhr = (urlEndpoint, callback, errorCallback) => {
     const url = `${this.baseUrl}/${urlEndpoint}`;
 
     const options = {
@@ -48,9 +48,10 @@ class OpenEHR {
 
     fetch(url, options)
       .then(function (response) {
-        if (response.status >= 400) {
-          console.log(response);
-          throw new Error('Bad response from server');
+        if (!response.ok || response.status === 204) {
+          let error = new Error('Bad response from server');
+          error.statusCode = response.status;
+          throw error;
         }
         return response.json();
       })
@@ -58,7 +59,12 @@ class OpenEHR {
         callback(json);
       })
       .catch(function (ex) {
-        console.log('parsing failed', ex);
+        if (errorCallback) {
+          console.log('got here');
+          errorCallback(ex);
+        } else {
+          console.log('parsing failed', ex);
+        }
       });
   };
 
@@ -68,14 +74,15 @@ class OpenEHR {
     let options = {
       method: 'post',
       headers: {
-        'Authorization': this.getAuthorizationHeader()
+        'Authorization': this.getAuthorizationHeader(),
+        'Accept': 'application/json'
       }
     };
     console.log(urlEndpoint);
     console.log(body);
 
     if (body !== null) {
-      options.body = JSON.stringify(body);
+      options.body = body;
       options.headers['Content-Type'] = 'application/json';
     }
 
@@ -83,11 +90,13 @@ class OpenEHR {
       .then(function (response) {
         if (response.status >= 400) {
           console.log(response);
+          return response.text();
         }
         return response.json();
       })
       .then(function (json) {
-        callback(json);
+        console.log(json);
+        // callback(json);
       })
       .catch(function (ex) {
         console.log('parsing failed', ex);
@@ -182,7 +191,7 @@ class OpenEHR {
       if (ehrResponseJson.status === 400 && ehrResponseJson.code === 'EHR-2124') {
         callback(ehrResponseJson);
       } else {
-        this.postOpenEhr(url, partyBody, (partyResponseJson) => {
+        this.postOpenEhr(url, JSON.stringify(partyBody), (partyResponseJson) => {
           callback(partyResponseJson);
         });
       }
@@ -203,11 +212,11 @@ class OpenEHR {
     });
   };
 
-  getAql = (aql, callback) => {
+  getAql = (aql, callback, errorCallback) => {
     const url = `${this.endpoints.query}/?aql=${aql}`;
     this.getOpenEhr(url, (json) => {
       callback(json);
-    });
+    }, errorCallback);
   };
 
   getComposition = (compositionUid, callback) => {

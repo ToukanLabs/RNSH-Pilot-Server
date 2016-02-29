@@ -1,5 +1,3 @@
-import OpenEHR from '../openehr';
-
 class URLQueryStringBuilder {
   constructor () {
     this.queryString = '';

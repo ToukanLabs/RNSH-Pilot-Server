@@ -65,7 +65,7 @@ function addPatient (req, res) {
 }
 
 function getDiagnosis (res, ehrId) {
-  const aql = `select a/uid/value as uid_value, a/context/start_time/value as context_start_time from EHR e[ehr_id/value='370d34f6-8a99-497f-9583-7d48eea96323'] contains COMPOSITION a[openEHR-EHR-COMPOSITION.health_summary.v1] where a/name/value= 'Prostate Cancer Summary' order by a/context/start_time/value desc offset 0 limit 1`;
+  const aql = `select a/uid/value as uid_value, a/context/start_time/value as context_start_time from EHR e[ehr_id/value='${ehrId}'] contains COMPOSITION a[openEHR-EHR-COMPOSITION.health_summary.v1] where a/name/value= 'Prostate Cancer Summary' order by a/context/start_time/value desc offset 0 limit 1`;
   code4health.getAql(aql, (json) => {
     const compositionUid = json.resultSet[0].uid_value;
     code4health.getComposition(compositionUid, (compositionJson) => {
@@ -76,10 +76,23 @@ function getDiagnosis (res, ehrId) {
       };
       res.json(returnJson);
     });
+  },
+  (ex) => {
+    if (ex.statusCode === 204) {
+      const returnJson = {
+        primary_tumour_pt: '',
+        regional_lymph_node_pn: '',
+        distant_metastasis_pm: ''
+      };
+      res.json(returnJson);
+    } else {
+      console.log('parsing failed', ex);
+    }
   });
 };
 
 function addDiagnosis (req, res) {
+  var date = new Date();
   const body = `{
   "ctx/composer_name": "DR Thilo Schuler",
   "ctx/health_care_facility|id": "999999-8561",
@@ -94,7 +107,7 @@ function addDiagnosis (req, res) {
   "prostate_cancer_summary/context/_health_care_facility|id_scheme": "HOSPITAL-NS",
   "prostate_cancer_summary/context/_health_care_facility|id_namespace": "HOSPITAL-NS",
   "prostate_cancer_summary/context/_health_care_facility|name": "Hospital",
-  "prostate_cancer_summary/context/start_time": "2016-01-28T15:55:08.822Z",
+  "prostate_cancer_summary/context/start_time": "${date.toISOString()}",
   "prostate_cancer_summary/context/setting|code": "238",
   "prostate_cancer_summary/context/setting|value": "other care",
   "prostate_cancer_summary/context/setting|terminology": "openehr",
@@ -136,7 +149,7 @@ function addDiagnosis (req, res) {
   "prostate_cancer_summary/management/chemotherapy_summary/medication_name": "Chemotherapy",
   "prostate_cancer_summary/management/chemotherapy_summary/current_use": false,
   "prostate_cancer_summary/management/chemotherapy_summary/last_updated": "2016-01-28T17:42:14.053Z",
-  "prostate_cancer_summary/composer|name": "Silvia Blake"
+  "prostate_cancer_summary/composer|name": "Thilo Schuler"
 }`;
   code4health.saveComposition('2016 01 Prostate Cancer Summary', req.params.ehrId, body, (json) => {
     res.json(json);
