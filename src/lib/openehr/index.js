@@ -96,7 +96,7 @@ class OpenEHR {
       })
       .then(function (json) {
         console.log(json);
-        // callback(json);
+        callback(json);
       })
       .catch(function (ex) {
         console.log('parsing failed', ex);
