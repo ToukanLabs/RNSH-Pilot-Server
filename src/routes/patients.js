@@ -179,7 +179,8 @@ function sendAria (req, res) {
           'Content-Type': 'application/json',
           'Authorization': `${process.env.ARIA_AUTH_CODE}`
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        rejectUnauthorized: false,
       };
 
       fetch(url, options)

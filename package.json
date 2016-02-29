@@ -1,6 +1,6 @@
 {
   "name": "RNSH-Pilot-Server",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Backend API for pilot clinical research database for Royal North Shore Hospital.",
   "scripts": {
     "start": "npm run dev",
