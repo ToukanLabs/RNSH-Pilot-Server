@@ -12,6 +12,8 @@ var graphqlHTTP = require('express-graphql');
 
 var mySchema = require('./graphql/schema');
 
+var cors = require('cors');
+
 var app = express();
 
 // TODO hack to remove later -- do not allow anything to request me !!!!!!
@@ -37,7 +39,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 
-app.use('/graphql', graphqlHTTP({ schema: mySchema, graphiql: true }));
+// TODO hack to remove later -- similar to aboce, this CORS setup allows for requests from all origins.
+app.use('/graphql', cors(), graphqlHTTP({ schema: mySchema, graphiql: true }));
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
