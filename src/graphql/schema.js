@@ -1,123 +1,82 @@
 import {
   // These are the basic GraphQL types
   GraphQLInt,
-  GraphQLFloat,
   GraphQLString,
   GraphQLList,
   GraphQLObjectType,
-  GraphQLEnumType,
   // This is used to create required fileds and arguments
   GraphQLNonNull,
   // This is the class we need to create the schema
   GraphQLSchema,
 } from 'graphql';
 
-import fetch from 'isomorphic-fetch';
-// import PatientsList from './data/patients';
-import OpenEHR from '../lib/openehr';
 import { openEHRPartyToPatient } from '../lib/openehr/utils';
-
-const baseUrl = 'https://ehrscape.code-4-health.org/rest/v1/';
-const subjectNamespace = 'rnsh.mrn';
-/* const username = 'rnshpilot_c4h';
-const password = 'lIsombRI'; */
-
-const code4health = new OpenEHR(
-  'https://ehrscape.code-4-health.org/rest/v1/',
-  'rnsh.mrn',
-  'rnshpilot_c4h',
-  'lIsombRI'
-);
-
-const getOpenEhr = (url, callback) => {
-  const options = {
-    headers: {
-      'Authorization': code4health.getAuthorizationHeader()
-    },
-  };
-  return fetch(url, options)
-    .then((response) => {
-      if (!response.ok || response.status === 204) {
-        let error = new Error('Bad response from server');
-        error.statusCode = response.status;
-        throw error;
-      }
-      return response.json();
-    })
-    .then((json) => {
-      return callback(json);
-    })
-    .catch((ex) => {
-      console.log('parsing failed', ex);
-      throw ex;
-    });
-};
-
-const postOpenEhr = (url, body, callback) => {
-  let options = {
-    method: 'post',
-    headers: {
-      'Authorization': this.getAuthorizationHeader(),
-      'Accept': 'application/json'
-    }
-  };
-
-  if (body !== null) {
-    options.body = body;
-    options.headers['Content-Type'] = 'application/json';
-  }
-
-  return fetch(url, options)
-    .then(function (response) {
-      if (response.status >= 400) {
-        return response.text();
-      }
-      return response.json();
-    })
-    .then((json) => {
-      return callback(json);
-    })
-    .catch((ex) => {
-      console.log('parsing failed', ex);
-      throw ex;
-    });
-};
+import { addPatient, getOpenEhr, openEHRBaseUrl, subjectNamespace } from './openEHR';
 
 const Allergies = new GraphQLObjectType({
   name: 'Allergies',
   description: 'Represent the allergies of a patient',
   fields: () => ({
-    name: {type: GraphQLString},
-    date: {type: GraphQLString},
+    name: {
+      type: GraphQLString,
+      description: 'The name of the Allergy the patient has'},
+    date: {
+      type: GraphQLString,
+      description: 'Then date the patient identified the allergy'
+    },
   })
 });
 
 const Patient = new GraphQLObjectType({
   name: 'Patient',
-  description: 'Represent the type of an author of a blog post or a comment',
+  description: 'Represent the type of a Patient in an openEHR party',
   fields: () => ({
-    id: {type: GraphQLString},
-    mrn: {type: GraphQLString},
+    id: {
+      type: GraphQLInt,
+      description: 'openEHR Party Id of the Patient'},
+    mrn: {
+      type: GraphQLInt,
+      description: 'Medical Record Number used for patient identification at RNSH'},
     ehrId: {
       type: GraphQLString,
+      description: 'openEHR electronic health record identifier',
       resolve: (patient) => {
-        const url = `${baseUrl}ehr/?subjectId=${patient.mrn}&subjectNamespace=${subjectNamespace}`;
+        const url = `${openEHRBaseUrl}ehr/?subjectId=${patient.mrn}&subjectNamespace=${subjectNamespace}`;
         return getOpenEhr(url, (ehrJson) => {
           return ehrJson.ehrId;
         });
       }
     },
-    dob: {type: GraphQLString},
-    firstname: {type: GraphQLString},
-    surname: {type: GraphQLString},
-    address: {type: GraphQLString},
-    phone: {type: GraphQLString},
-    email: {type: GraphQLString},
-    gender: {type: GraphQLString},
-    tumorType: {type: GraphQLString},
-    surgical: {type: GraphQLString},
+    dob: {
+      type: GraphQLString,
+      description: 'Patient Date of birth'},
+    firstname: {
+      type: GraphQLString,
+      description: 'Patient first name'},
+    surname: {
+      type: GraphQLString,
+      description: 'Patient surname'},
+    address: {
+      type: GraphQLString,
+      description: 'Patients main contact address'},
+    phone: {
+      type: GraphQLString,
+      description: 'Patients phone number'},
+    email: {
+      type: GraphQLString,
+      description: 'Patients email address'},
+    gender: {
+      type: GraphQLString,
+      description: 'Patient Gender, either MALE or FEMALE'},
+    tumorType: {
+      type: GraphQLString,
+      description: 'Tumour Type Either PROSTATE, BREAST or CNS'},
+    surgical: {
+      type: GraphQLString,
+      description: 'If a patient has had surgery on their tumour then true otherwise false'},
     allergies: {
       type: new GraphQLList(Allergies),
+      description: 'A list of allergies that the patient may have'
     }
   })
 });
@@ -129,7 +88,7 @@ const Query = new GraphQLObjectType({
     patients: {
       type: new GraphQLList(Patient),
       resolve: () => {
-        const url = `${baseUrl}demographics/party/query/?lastNames=*&rnsh.mrn=*`;
+        const url = `${openEHRBaseUrl}demographics/party/query/?lastNames=*&rnsh.mrn=*`;
         return getOpenEhr(url, (json) => {
           const patients = json.parties.map((p) => {
             return openEHRPartyToPatient(p);
@@ -144,7 +103,7 @@ const Query = new GraphQLObjectType({
         id: {type: new GraphQLNonNull(GraphQLInt), description: 'Return a specific patient'}
       },
       resolve: (source, {id}) => {
-        const url = `${baseUrl}demographics/party/${id}`;
+        const url = `${openEHRBaseUrl}demographics/party/${id}`;
         return getOpenEhr(url, (json) => {
           return openEHRPartyToPatient(json.party);
         });
@@ -164,43 +123,55 @@ const Query = new GraphQLObjectType({
 });
 
 const Mutation = new GraphQLObjectType({
-  name: 'BlogMutations',
+  name: 'RNSHMutations',
   fields: {
     createPatient: {
       type: Patient,
-      description: 'Create a new patient',
+      description: 'Create a new patient.',
       args: {
-        firstname: {type: new GraphQLNonNull(GraphQLString)},
-        surname: {type: new GraphQLNonNull(GraphQLString)},
-        gender: {type: new GraphQLNonNull(GraphQLString)},
-        dob: {type: new GraphQLNonNull(GraphQLString)},
-        address: {type: new GraphQLNonNull(GraphQLString)},
-        mrn: {type: new GraphQLNonNull(GraphQLString)},
-        tumorType: {type: new GraphQLNonNull(GraphQLString)},
-        surgical: {type: new GraphQLNonNull(GraphQLString)},
-        phone: {type: new GraphQLNonNull(GraphQLString)},
-        email: {type: new GraphQLNonNull(GraphQLString)}
+        firstname: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patient first name'},
+        surname: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patient surname'},
+        gender: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patient Gender, either MALE or FEMALE'},
+        dob: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patient Date of birth'},
+        address: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patients main contact address'
+        },
+        mrn: {
+          type: new GraphQLNonNull(GraphQLInt),
+          description: 'Medical Record Number used for patient identification at RNSH'
+        },
+        tumorType: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Tumour Type Either PROSTATE, BREAST or CNS'
+        },
+        surgical: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'If a patient has had surgery on their tumour then true otherwise false'
+        },
+        phone: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patients phone number'
+        },
+        email: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'Patients email address'
+        }
       },
-      resolve: function (source, {...args}) {
-        /* let post = args;
-        var alreadyExists = _.findIndex(PostsList, p => p._id === post._id) >= 0;
-        if(alreadyExists) {
-          throw new Error("Post already exists: " + post._id);
-        }
+      resolve: function (source, args) {
+        let patient = Object.assign({}, args);
 
-        if(!AuthorsMap[post.author]) {
-          throw new Error("No such author: " + post.author);
-        }
-
-        if(!post.summary) {
-          post.summary = post.content.substring(0, 100);
-        }
-
-        post.comments = [];
-        post.date = {$date: new Date().toString()}
-
-        PostsList.push(post);
-        return post;*/
+        return addPatient(patient.firstname, patient.surname, patient.gender,
+           patient.dob, patient.address, patient.mrn, patient.tumorType,
+           patient.surgical, patient.phone, patient.email);
       }
     }
   }
