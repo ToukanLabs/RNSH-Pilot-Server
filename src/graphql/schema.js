@@ -35,7 +35,7 @@ const Patient = new GraphQLObjectType({
       type: GraphQLInt,
       description: 'openEHR Party Id of the Patient'},
     mrn: {
-      type: GraphQLInt,
+      type: GraphQLString,
       description: 'Medical Record Number used for patient identification at RNSH'},
     ehrId: {
       type: GraphQLString,
@@ -70,7 +70,7 @@ const Patient = new GraphQLObjectType({
       description: 'Patient Gender, either MALE or FEMALE'},
     tumorType: {
       type: GraphQLString,
-      description: 'Tumour Type Either PROSTATE, BREAST or CNS'},
+      description: 'Tumour Type Either Prostate, Breast or CNS'},
     surgical: {
       type: GraphQLString,
       description: 'If a patient has had surgery on their tumour then true otherwise false'},
@@ -146,12 +146,12 @@ const Mutation = new GraphQLObjectType({
           description: 'Patients main contact address'
         },
         mrn: {
-          type: new GraphQLNonNull(GraphQLInt),
+          type: new GraphQLNonNull(GraphQLString),
           description: 'Medical Record Number used for patient identification at RNSH'
         },
         tumorType: {
           type: new GraphQLNonNull(GraphQLString),
-          description: 'Tumour Type Either PROSTATE, BREAST or CNS'
+          description: 'Tumour Type Either Prostate, Breast or CNS'
         },
         surgical: {
           type: new GraphQLNonNull(GraphQLString),
