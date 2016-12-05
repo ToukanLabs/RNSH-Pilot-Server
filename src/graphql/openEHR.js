@@ -3,7 +3,7 @@ import fetch from 'isomorphic-fetch';
 import OpenEHR from '../lib/openehr';
 import { openEHRPartyToPatient } from '../lib/openehr/utils';
 
-const baseUrl = 'https://ehrscape.code-4-health.org/rest/v1/';
+const baseUrl = 'https://ehrscape.code4health.org/rest/v1/';
 const subjectNamespace = 'rnsh.mrn';
 /* const username = 'rnshpilot_c4h';
 const password = 'lIsombRI'; */
